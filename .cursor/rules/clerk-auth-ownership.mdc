@@ -1,0 +1,36 @@
+---
+description: Clerk-only auth + strict per-user authorization (users can only access their own data)
+alwaysApply: true
+---
+
+# Auth is Clerk; authorization is ownership
+
+- **Clerk is the only auth source**: Determine the current user from Clerk server-side (`auth()` / `currentUser()` from `@clerk/nextjs/server`). Never trust client-provided identity.
+- **Never accept `userId` from the client**: No request body/query params like `{ userId }` to scope reads/writes.
+- **Every read/write must enforce ownership**: Any query that fetches/updates/deletes user data must be scoped by the authenticated Clerk `userId`.
+- **Avoid IDOR for nested resources**: If a request uses `deckId`/`cardId`, you must verify that resource belongs to the current user (typically by joining through `decks.userId`).
+
+## Examples
+
+```ts
+import { auth } from "@clerk/nextjs/server";
+import { db } from "@/db";
+import * as schema from "@/db/schema";
+
+const { userId } = auth();
+if (!userId) throw new Error("Unauthorized");
+
+// ✅ GOOD: scope by userId
+await db.query.decks.findMany({ where: (d, { eq }) => eq(d.userId, userId) });
+
+// ❌ BAD: unscoped (leaks other users' decks)
+await db.select().from(schema.decks);
+```
+
+```ts
+// ✅ GOOD: verify deck belongs to user before accessing cards by deckId
+const deck = await db.query.decks.findFirst({
+  where: (d, { and, eq }) => and(eq(d.id, deckId), eq(d.userId, userId)),
+});
+if (!deck) throw new Error("Not found");
+```

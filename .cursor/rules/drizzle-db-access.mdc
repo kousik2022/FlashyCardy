@@ -1,0 +1,29 @@
+---
+description: Enforce Drizzle-only database access via src/db/schema.ts + src/db/index.ts
+globs: "src/**/*.{ts,tsx}"
+alwaysApply: false
+---
+
+# Database access must use Drizzle schema
+
+- **Use the shared Drizzle client**: Import `db` from `src/db/index.ts`. Do not create new DB clients elsewhere.
+- **Use schema objects for tables/columns**: Reference tables/columns via exports from `src/db/schema.ts` (e.g. `schema.decks`, `schema.cards`), not string table names.
+- **Prefer Drizzle query APIs**: Use `db.select/insert/update/delete` and `db.query.*` where available.
+
+## Prohibited
+
+- Creating new connections/clients in app code (e.g. `neon(...)`, `pg.Pool`, `new Client(...)`).
+- Raw SQL strings or ad-hoc SQL execution for application queries.
+- Querying tables/columns by string names instead of the schema exports.
+
+## Examples
+
+```ts
+import { db } from "@/db";
+import * as schema from "@/db/schema";
+
+await db.select().from(schema.decks);
+await db.insert(schema.cards).values({ deckId, front, back, position: 0 });
+await db.query.decks.findMany({ where: (d, { eq }) => eq(d.userId, userId) });
+```
+
