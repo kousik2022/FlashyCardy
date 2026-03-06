@@ -26,4 +26,3 @@ await db.select().from(schema.decks);
 await db.insert(schema.cards).values({ deckId, front, back, position: 0 });
 await db.query.decks.findMany({ where: (d, { eq }) => eq(d.userId, userId) });
 ```
-

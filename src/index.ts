@@ -52,4 +52,3 @@ main().catch((err) => {
   console.error("Error in seed script:", err);
   process.exit(1);
 });
-

@@ -4,61 +4,66 @@ import {
   pgTable,
   text,
   timestamp,
+  uuid,
   varchar,
 } from "drizzle-orm/pg-core";
 
-// Decks created by a Clerk user
+// Decks: each user (Clerk) can create decks, e.g. "Indonesian from English" or "British History"
 export const decks = pgTable(
   "decks",
   {
-    id: integer().primaryKey().generatedAlwaysAsIdentity(),
+    id: uuid("id").primaryKey().defaultRandom(),
 
-    // Clerk user ID (string identifier from Clerk)
-    userId: varchar({ length: 255 }).notNull(),
+    // Clerk user ID – ownership comes from auth, no users table
+    userId: varchar("user_id", { length: 255 }).notNull(),
 
-    // Human-friendly name of the deck, e.g. "Indonesian from English"
-    name: varchar({ length: 255 }).notNull(),
+    name: varchar("name", { length: 255 }).notNull(),
+    description: text("description"),
 
-    // Optional description, e.g. "Everyday vocabulary" or "British history basics"
-    description: text(),
-
-    createdAt: timestamp({ withTimezone: true }).defaultNow().notNull(),
-    updatedAt: timestamp({ withTimezone: true }).defaultNow().notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .defaultNow()
+      .notNull(),
+    updatedAt: timestamp("updated_at", { withTimezone: true })
+      .defaultNow()
+      .notNull(),
   },
   (t) => ({
     userIdIdx: index("decks_user_id_idx").on(t.userId),
     userIdNameIdx: index("decks_user_id_name_idx").on(t.userId, t.name),
-  }),
+  })
 );
 
-// Individual flashcards that belong to a deck
+// Cards: each deck has many cards with front/back content
+// e.g. front: "Dog", back: "Anjing" | front: "When was the battle of Hastings?", back: "1066"
 export const cards = pgTable(
   "cards",
   {
-    id: integer().primaryKey().generatedAlwaysAsIdentity(),
+    id: uuid("id").primaryKey().defaultRandom(),
 
-    deckId: integer()
+    deckId: uuid("deck_id")
       .notNull()
       .references(() => decks.id, { onDelete: "cascade" }),
 
-    // Card ordering within a deck (lower comes first)
-    position: integer().notNull().default(0),
+    position: integer("position").notNull().default(0),
 
-    // Front of the card (prompt/question/term), e.g. "Dog" or "When was the battle of Hastings?"
-    front: text().notNull(),
+    // Front: prompt, question, or term (e.g. "Dog", "When was the battle of Hastings?")
+    front: text("front").notNull(),
 
-    // Back of the card (answer/definition/translation), e.g. "Anjing" or "1066"
-    back: text().notNull(),
+    // Back: answer, definition, or translation (e.g. "Anjing", "1066")
+    back: text("back").notNull(),
 
-    createdAt: timestamp({ withTimezone: true }).defaultNow().notNull(),
-    updatedAt: timestamp({ withTimezone: true }).defaultNow().notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .defaultNow()
+      .notNull(),
+    updatedAt: timestamp("updated_at", { withTimezone: true })
+      .defaultNow()
+      .notNull(),
   },
   (t) => ({
     deckIdIdx: index("cards_deck_id_idx").on(t.deckId),
     deckIdPositionIdx: index("cards_deck_id_position_idx").on(
       t.deckId,
-      t.position,
+      t.position
     ),
-  }),
+  })
 );
-

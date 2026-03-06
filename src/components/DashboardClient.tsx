@@ -1,13 +1,22 @@
+"use client";
+
+import { useState } from "react";
+import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { auth } from "@clerk/nextjs/server";
 import { count, desc, eq, inArray } from "drizzle-orm";
 import { db } from "@/db";
 import { cards, decks } from "@/db/schema";
-import { DashboardSignedOut } from "./DashboardSignedOut";
 import { CreateDeckModal } from "@/components/CreateDeckModal";
 import { DeleteDeckModal } from "@/components/DeleteDeckModal";
 import { EditDeckModal } from "@/components/EditDeckModal";
 import { StudyProgressDisplay } from "@/components/StudyProgressDisplay";
+
+interface DashboardClientProps {
+  userId: string;
+  userDecks: any[];
+  cardCountsMap: Record<string, number>;
+  totalCards: number;
+}
 
 function formatDate(date: Date) {
   return new Intl.DateTimeFormat('en-US', {
@@ -19,44 +28,8 @@ function formatDate(date: Date) {
   }).format(date);
 }
 
-export default async function DashboardPage() {
-  const { userId } = await auth();
-
-  if (!userId) {
-    return (
-      <main className="flex min-h-[calc(100vh-73px)] items-center justify-center bg-linear-to-b from-indigo-950/30 via-zinc-950 to-cyan-950/30 px-4">
-        <div className="w-full max-w-5xl">
-          <DashboardSignedOut />
-        </div>
-      </main>
-    );
-  }
-
-  const userDecks = await db
-    .select()
-    .from(decks)
-    .where(eq(decks.userId, userId))
-    .orderBy(desc(decks.updatedAt));
-
-  const deckIds = userDecks.map((d) => d.id);
-  let cardCountsMap: Record<string, number> = {};
-
-  if (deckIds.length > 0) {
-    const counts = await db
-      .select({
-        deckId: cards.deckId,
-        count: count(),
-      })
-      .from(cards)
-      .where(inArray(cards.deckId, deckIds))
-      .groupBy(cards.deckId);
-
-    cardCountsMap = Object.fromEntries(
-      counts.map((c) => [c.deckId, Number(c.count)])
-    );
-  }
-
-  const totalCards = Object.values(cardCountsMap).reduce((a, b) => a + b, 0);
+export function DashboardClient({ userId, userDecks, cardCountsMap, totalCards }: DashboardClientProps) {
+  const router = useRouter();
 
   return (
     <main className="flex items-center justify-center bg-linear-to-b from-indigo-950/30 via-zinc-950 to-cyan-950/30 px-4">
@@ -103,7 +76,9 @@ export default async function DashboardPage() {
                 <h2 className="text-sm font-semibold tracking-tight text-zinc-100">
                   Your decks
                 </h2>
-                <CreateDeckModal />
+                <div className="flex gap-2">
+                  <CreateDeckModal />
+                </div>
               </div>
               
               {userDecks.length === 0 ? (
