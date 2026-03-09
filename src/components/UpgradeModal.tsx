@@ -18,8 +18,9 @@ export function UpgradeModal({ isOpen, onClose, currentLimit, currentUsage }: Up
 
   const handleUpgrade = () => {
     setIsLoading(true);
-    // In a real app, this would redirect to payment processing
-    window.location.href = "/pricing";
+    // In a real app, this would handle upgrade logic
+    console.log("Upgrade clicked - implement upgrade logic");
+    setIsLoading(false);
   };
 
   return (
@@ -102,15 +103,6 @@ export function UpgradeModal({ isOpen, onClose, currentLimit, currentUsage }: Up
           </button>
         </div>
 
-        <div className="mt-4 text-center">
-          <Link 
-            href="/pricing" 
-            className="text-xs text-cyan-400 hover:text-cyan-300 transition-colors"
-            onClick={onClose}
-          >
-            View all pricing plans →
-          </Link>
-        </div>
       </div>
     </div>
   );

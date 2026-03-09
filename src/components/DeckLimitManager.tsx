@@ -73,12 +73,12 @@ export function DeckLimitManager({ userDecksLength, freeDeckLimit }: DeckLimitMa
               <p className="text-xs text-zinc-400">Upgrade to Pro for unlimited decks and AI features</p>
             </div>
           </div>
-          <Link
-            href="/pricing"
+          <button
+            onClick={() => console.log("Upgrade clicked - implement upgrade logic")}
             className="inline-flex items-center rounded-lg bg-gradient-to-r from-cyan-500 to-indigo-500 px-4 py-2 text-xs font-semibold text-white shadow-lg shadow-cyan-500/20 transition hover:from-cyan-600 hover:to-indigo-600"
           >
             Upgrade Now
-          </Link>
+          </button>
         </div>
       </div>
     );
